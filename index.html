@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>OpenAI Prekladač</title>
+    <meta name="viewport" content="width=device-width">
+    <style type="text/css">
+        body {
+            padding: 0 20px 10px 20px;
+        }
+        .header {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+        }
+        textarea, input[type="text"] {
+            display: block;
+            margin-bottom: 10px;
+            min-width: 640px;
+        }
+        button {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<form class="open-ai-translator" method="post">
+    <div class="header">
+        <h1>OpenAI Prekladač</h1>
+        <a href="https://platform.openai.com/playground" target="_blank">OpenAI Playground</a>
+    </div>
+    <label for="api-key-input">OpenAI API kľúč (<a href="https://platform.openai.com/account/api-keys" target="_blank">viď</a>): </label>
+    <input type="text" id="api-key-input" placeholder="Zadaj OpenAI kľúč..." />
+    <label for="source-lang-text-input">Napíš slovenský text na preloženie do angličtiny:</label>
+    <textarea
+            id="source-lang-text-input"
+            placeholder="Zadaj text, napr. &quot;Ľaľa ho papľuha aké má hybké hnáty&quot;"
+    /></textarea>
+    <button id="submit">Preložiť</button>
+    <label for="target-lang-text-input">Preložený text v angličtine:</label>
+    <textarea
+            id="target-lang-text-input"
+    /></textarea>
+</form>
+<script type="text/javascript">
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.querySelector('.open-ai-translator');
+        form.onsubmit = async function(e) {
+            e.preventDefault(); // Prevent the form from submitting the traditional way
+
+            // get the API key and text input from the form
+            const apiKey = document.getElementById('api-key-input').value;
+            const sourceText = document.getElementById('source-lang-text-input').value;
+
+            // check if API key or source text is empty
+            if (!apiKey || !sourceText.trim()) {
+                alert('API key and text for translation are required.');
+                return;
+            }
+
+            try {
+                // request the OpenAI API
+                const response = await fetch("https://api.openai.com/v1/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + apiKey
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-3.5-turbo-instruct",
+                        prompt: "Translate the following Slovak text to English, give me just the translated text:\n```" + sourceText + "```",
+                        temperature: 0.5,
+                        max_tokens: 200,
+                        top_p: 1.0,
+                        frequency_penalty: 0.0,
+                        presence_penalty: 0.0
+                    })
+                });
+                // process the response
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const result = await response.json();
+                document.getElementById('target-lang-text-input').value = result.choices[0].text.trim();
+            }
+            catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while translating. Please check the console for details.');
+            }
+        };
+    });
+</script>
+</body>
+</html>
